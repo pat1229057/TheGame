@@ -1,0 +1,22 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Project (Fetch ON)",
+      "type": "shell",
+      "command": "cmake -S . -B build -DUSE_FETCH=ON && cmake --build build -j$(nproc)",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Build Project (Fetch OFF)",
+      "type": "shell",
+      "command": "cmake -S . -B build -DUSE_FETCH=OFF && cmake --build build -j$(nproc)",
+      "group": "build",
+      "problemMatcher": ["$gcc"]
+    }
+  ]
+}
