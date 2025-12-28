@@ -1,0 +1,14 @@
+1   Tile    Ground   0   0
+2   Tile    Ground   1   0
+3   Tile    Ground   2   0
+4   Tile    Ground   3   0
+5   Tile    Ground   4   0
+6   Tile    Ground   5   0
+7   Tile    Ground   6   0
+8   Tile    Ground   7   0
+9   Tile    Ground   8   0
+10  Tile    Ground   9   0
+11  Tile    Ground   10  0
+12  Tile    Ground   11  0
+13  Tile    Ground   12  0
+14  Player  2   6   48   48   5   -20   20   0.75   Buster

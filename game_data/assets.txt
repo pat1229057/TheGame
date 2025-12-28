@@ -1,0 +1,43 @@
+1   Texture   TexStand     images/megaman/stand64.png
+2   Texture   TexRun       images/megaman/run64.png
+3   Texture   TexAir       images/megaman/air64.png
+4   Texture   TexBuster    images/megaman/buster.png
+5   Texture   TexExplode   images/misc/explosion128.png
+6   Texture   TexCoin      images/misc/coinspin.png
+7   Texture   TexBrick     images/mario/brick.png
+8   Texture   TexQ         images/mario/qfade.png
+9   Texture   TexQ2        images/mario/question2.png
+10  Texture   TexPipeS     images/mario/pipesmall.png
+11  Texture   TexPipeT     images/mario/pipetall.png
+12  Texture   TexCloudB    images/mario/cloudbig.png
+13  Texture   TexCloudS    images/mario/cloudsmall.png
+14  Texture   TexBush      images/mario/bush.png
+15  Texture   TexBushBig   images/mario/bushbig.png
+16  Texture   TexGround    images/mario/ground.png
+17  Texture   TexBlock     images/mario/block.png
+18  Texture   TexPole      images/mario/flagpole.png
+19  Texture   TexPoleTop   images/mario/flagtop.png
+20  Texture   TexFlag      images/mario/flag.png
+21  Animation Stand        TexStand     1   0
+22  Animation Run          TexRun       4   10
+23  Animation Air          TexAir       1   0
+24  Animation Buster       TexBuster    1   0
+25  Animation Explosion    TexExplode   48  2
+26  Animation Coin         TexCoin      6   5
+27  Animation Question     TexQ         4   10
+28  Animation Brick        TexBrick     1   0
+29  Animation Question2    TexQ2        1   0
+30  Animation PipeTall     TexPipeT     1   0
+31  Animation PipeSmall    TexPipeS     1   0
+32  Animation CloudBig     TexCloudB    1   0
+33  Animation CloudSmall   TexCloudS    1   0
+34  Animation Bush         TexBush      1   0
+35  Animation BushBig      TexBushBig   1   0
+36  Animation Ground       TexGround    1   0
+37  Animation Block        TexBlock     1   0
+38  Animation Flag         TexFlag      1   0
+39  Animation Pole         TexPole      1   0
+40  Animation PoleTop      TexPoleTop   1   0
+41  Font      Tech         fonts/tech.ttf
+42  Font      Mario        fonts/mario.ttf
+43  Font      Megaman      fonts/megaman.ttf

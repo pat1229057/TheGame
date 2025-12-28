@@ -1,10 +1,32 @@
-/build/
-/bin/
+# Build folders (CMake + VS Code + Visual Studio)
+build/
+build_debug/
+build_release/
+out/
+bin/
+_deps/
+
+# CMake-generated files
 /CMakeFiles/
 CMakeCache.txt
+cmake-build-*/
 *.cmake
+
+# Compiled objects / binaries
 *.o
 *.obj
 *.pdb
 *.exe
 *.log
+
+# IDE configs
+.vscode/
+.clangd
+.cache/
+
+# Claude editor temp files
+CLAUDE.md
+.claude/
+
+# Misc
+EOF
