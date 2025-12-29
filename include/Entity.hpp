@@ -29,17 +29,33 @@ public:
     return std::get<T>(m_components);
   }
 
-  template <typename T> T &get() noexcept {}
+  template <typename T> T &get() noexcept {
+    return std::get<T>(m_components);
+  }
 
-  template <typename T> bool has() const noexcept {}
+  template <typename T> bool has() const noexcept {
+    return get<T>().exist;
+  }
 
-  size_t id() const noexcept {}
+  size_t id() const noexcept {
+    return m_id;
+  }
 
-  bool isAlive() const noexcept {}
+  bool isAlive() const noexcept {
+    return m_alive;
+  }
 
-  void destroy() noexcept {}
+  void destroy() noexcept {
+    m_alive = false;
+  }
 
-  const std::string &tag() const noexcept {}
+  const std::string &tag() const noexcept {
+    return m_tag;
+  }
 
-  template <typename T> void remove() noexcept {}
+  template <typename T> void remove() noexcept {
+      auto& C = get<T>();
+      C = T();
+      get<T>().exist = false;
+  }
 };
