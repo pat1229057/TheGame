@@ -15,9 +15,9 @@ public:
   Scene_Menu(GameEngine &gameEngine);
 
   void init();
-  void update();
+  void update() override;
 
-  void sDoAction(const Action &action);
+  void sDoAction(const Action &action) override;
 
-  void sRender();
+  void sRender() override;
 };

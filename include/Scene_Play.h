@@ -28,7 +28,7 @@ protected:
 
   void loadLevel(const std::string &filename);
 
-  void update();
+  void update() override;
   void onEnd();
   void spawnBullet(std::shared_ptr<Entity> entity);
 
@@ -40,9 +40,9 @@ protected:
   void sCollision();
   void sLifespan();
   void sMovement();
-  void sDoAction(const Action &action);
+  void sDoAction(const Action &action) override;
   void sAnimation();
   void sGUI();
-  void sRender();
+  void sRender() override;
   void drawLine(const Vec2f &p1, const Vec2f &p2);
 };
