@@ -1,7 +1,9 @@
 #include "GameEngine.h"
 #include "Assets.h"
+#include "SFML/Graphics/Texture.hpp"
 #include "SFML/Window/Event.hpp"
 #include "SFML/Window/Keyboard.hpp"
+#include "SFML/Window/Mouse.hpp"
 #include "Scene_Menu.h"
 #include "Scene_Play.h"
 #include "imgui-SFML.h"
@@ -9,6 +11,7 @@
 
 #include <iostream>
 #include <memory>
+#include <string>
 
 GameEngine::GameEngine(const std::string &path) { init(path); }
 
@@ -61,8 +64,27 @@ void GameEngine::run() {
 void GameEngine::sUserInput() {
   // TODO write Event loop
   while (auto event = m_window.pollEvent()) {
+    ImGui::SFML::ProcessEvent(m_window, *event);
     // do quit
+    if (event->is<sf::Event::Closed>()) {
+      quit();
+    }
+    if (const auto *keyPressed = event->getIf<sf::Event::KeyPressed>()) {
+      if (keyPressed->scancode == sf::Keyboard::Scancode::Escape) {
+        quit();
+      }
+    }
+
     // do screenshot x
+    if (const auto *keypressed = event->getIf<sf::Event::KeyPressed>()) {
+      if (keypressed->scancode == sf::Keyboard::Scancode::Escape) {
+        sf::Texture texture(m_window.getSize());
+        texture.update(m_window);
+        if (texture.copyToImage().saveToFile("assets/images/screenshot.png")) {
+          std::cout << "Screenshot saved\n";
+        }
+      }
+    }
 
     // TODO: event pressed or released
     if (event->is<sf::Event::KeyPressed>()) {
@@ -73,6 +95,35 @@ void GameEngine::sUserInput() {
       }
       currentScene()->sDoAction(
           Action(currentScene()->getActionMap().at(keyScanncode), "PRESS"));
+    }
+    if (event->is<sf::Event::KeyReleased>()) {
+      auto keyScanncode = event->getIf<sf::Event::KeyReleased>()->scancode;
+      if (currentScene()->getActionMap().find(keyScanncode) ==
+          currentScene()->getActionMap().end()) {
+        continue;
+      }
+      currentScene()->sDoAction(
+          Action(currentScene()->getActionMap().at(keyScanncode), "RELEASED"));
+    }
+    if (event->is<sf::Event::MouseButtonPressed>() ||
+        event->is<sf::Event::MouseButtonReleased>()) {
+      std::string type;
+      sf::Mouse::Button scancode;
+      if (event->is<sf::Event::MouseButtonReleased>()) {
+        type = "RELEASED";
+        scancode = event->getIf<sf::Event::MouseButtonReleased>()->button;
+      }
+      if (event->is<sf::Event::MouseButtonPressed>()) {
+        type = "PRESS";
+        scancode = event->getIf<sf::Event::MouseButtonPressed>()->button;
+      }
+
+      if (currentScene()->getActionMap().find(scancode) ==
+          currentScene()->getActionMap().end()) {
+        continue;
+      }
+      currentScene()->sDoAction(
+          Action(currentScene()->getActionMap().at(scancode), "PRESS"));
     }
   }
 }
@@ -91,4 +142,9 @@ void GameEngine::changeScene(const std::string &sceneName,
     m_sceneMap.erase(tempCurrentScene);
   }
 }
-void GameEngine::update() { currentScene()->update(); }
+void GameEngine::update() {
+  sUserInput();
+  currentScene()->update();
+}
+
+void GameEngine::quit() { m_window.close(); }
