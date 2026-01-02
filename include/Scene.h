@@ -24,7 +24,6 @@ protected:
   size_t m_currentFrame{0};
 
   void setPaused(bool paused);
-  // ActionMap getActionMap();
 
 public:
   Scene(GameEngine &game);
