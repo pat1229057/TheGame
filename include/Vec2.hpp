@@ -34,6 +34,13 @@ public:
     result.y = this->y * rhs.y;
     return result;
   }
+  template <ArithmeticType U>
+  constexpr Vec2 operator*(const U &rhs) const noexcept {
+    Vec2 result{};
+    result.x = this->x * rhs;
+    result.y = this->y * rhs;
+    return result;
+  }
 
   constexpr Vec2 operator-(const Vec2 &rhs) const noexcept {
     Vec2 result{};
