@@ -19,7 +19,8 @@ private:
                   bool smooth = 1);
 
   void addAnimation(const std::string &animationName,
-                    const std::string &textureName, size_t);
+                    const std::string &textureName, size_t frameCount,
+                    size_t speed);
 
   void addFont(const std::string &fontName, const std::string &path);
 

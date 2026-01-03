@@ -4,6 +4,7 @@
 #include "SFML/Graphics/Font.hpp"
 #include "SFML/Graphics/Texture.hpp"
 #include <cassert>
+#include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -19,8 +20,12 @@ void Assets::addTexture(const std::string &textureName, const std::string &path,
 }
 
 // random size_t
-void Assets::addAnimation(const std::string &AnimationName,
-                          const std::string &path, size_t) {}
+void Assets::addAnimation(const std::string &animationName,
+                          const std::string &textureName, size_t frameCount,
+                          size_t speed) {
+  m_animationMap[animationName] =
+      Animation(animationName, textureName, frameCount, speed);
+}
 
 void Assets::addFont(const std::string &fontName, const std::string &path) {
   m_fontMap[fontName] = sf::Font(path);
