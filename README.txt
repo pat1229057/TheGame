@@ -52,41 +52,26 @@ Player:
   This means the player can move left/right while in the air
 - The player can only jump if it is currently standing on a tile
 - If the jump key is held, the player should not continuously jump, but
-  instead it should only jump once per button press. If the player lets
-  go of the jump key mid-jump, it should start falling back down immediately
-- If the player moves left/right, the player's sprite will face in that
-  direction until the other direction has been pressed
-- Bullets shot by the player travel in the direction the player is facing
-- The player collides with 'Tile' entities in the level (see level syntax) and
-  cannot move through them. The player land on a Tile entity and stand in place
-  if it falls on it from above.
-- The player does not collide with 'Dec' (decoration) entities in the level
-- If the player falls below the bottom of the screen, they respawn at the start
-- The player should have a Gravity component which constantly accelerates it
-  downward on the screen until it collides with a tile
-- The player has a maximum speed specified in the Level file (see below) which
-  it should not exceed in either x or y direction
-- The player will be given a CBoundingBox of a size specified in the level file
-- The player's sprite and bounding box are centered on the player's position
-
-Animations:
-- See below for Animation asset specification
-- Animations are implemented by storing multiple frames inside a texture
-- The Animation class handles frame advancement based on animation speed
-- You need to implement Animation::update() to properly progress animations
-- You need to implement Animation::hasEnded() which returns true if an
-  animation has finished its last frame, false otherwise
-- Animations can be repeating (loop forever) or non-repeating (play once)
-- Any entity with a non-repeating animation should be destroyed once its
-  Animation's hasEnded() returns true (has finished one cycle)
-
-Decoration Entities:
-- Decoration entities ('Dec' in a level file) are simply drawn to the screen,
-  and do not interact with any other entities in the game in any way
-- Decorations can be given any Animation in the game, but intuitively they
-  should be reserved for things like clouds, bushes, etc
-
-Tiles:
+  instead it should only jump once per button press. If the player lets go of 
+  the jump key mid-jump, it should start falling back down immediately 
+  - If the player moves left/right, the player's sprite will face in that direction until the other direction has been pressed 
+  - Bullets shot by the player travel in the direction the player is facing 
+  - The player collides with 'Tile' entities in the level (see level syntax) and cannot move through them. The player land on a Tile entity and stand in place if it falls on it from above.  
+  - The player does not collide with 'Dec' (decoration) entities in the level 
+  - If the player falls below the bottom of the screen, they respawn at the start 
+  - The player should have a Gravity component which constantly accelerates it downward on the screen until it collides with a tile 
+  - The player has a maximum speed specified in the Level file (see below) which it should not exceed in either x or y direction 
+  - The player will be given a CBoundingBox of a size specified in the level file 
+  - The player's sprite and bounding box are centered on the player's position Animations: 
+  - See below for Animation asset specification 
+  - Animations are implemented by storing multiple frames inside a texture 
+  - The Animation class handles frame advancement based on animation speed 
+  - You need to implement Animation::update() to properly progress animations 
+  - You need to implement Animation::hasEnded() which returns true if an animation has finished its last frame, false otherwise 
+  - Animations can be repeating (loop forever) or non-repeating (play once) 
+  - Any entity with a non-repeating animation should be destroyed once its Animation's hasEnded() returns true (has finished one cycle) Decoration Entities: 
+  - Decoration entities ('Dec' in a level file) are simply drawn to the screen, and do not interact with any other entities in the game in any way 
+  - Decorations can be given any Animation in the game, but intuitively they should be reserved for things like clouds, bushes, etc Tiles:
 - Tiles are Entities that define the level geometry and interact with players
 - Tiles can be given any Animation that is defined in the Assets file
 - Tiles will be given a CBoundingBox equal to the size of the animation
@@ -228,7 +213,6 @@ I recommend approaching this assignment in the following order, which will
 help you debug your program along the way with minimal errors. Remember to
 do one step at a time and test whether what you have just implemented is
 working properly before moving on to any additional steps.
-
 - Rendering system has already been set up for you, to help you debug:
   You can press the T key to toggle drawing textures
   You can press the C key to toggle drawing bounding boxes

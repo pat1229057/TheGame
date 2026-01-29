@@ -24,7 +24,6 @@ protected:
   sf::Text m_gridText;
 
   void init(const std::string &levelPath);
-  Scene_Play(GameEngine &gameEngine, const std::string &levelPath);
 
   void loadLevel(const std::string &filename);
 
@@ -44,5 +43,9 @@ protected:
   void sAnimation();
   void sGUI();
   void sRender() override;
-  void drawLine(const Vec2f &p1, const Vec2f &p2);
+  void drawLine(const Vec2f &p1, const Vec2f &p2,
+                const sf::Color &color = sf::Color::White);
+
+public:
+  Scene_Play(GameEngine &gameEngine, const std::string &levelPath);
 };

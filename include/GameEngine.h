@@ -18,6 +18,7 @@ protected:
   SceneMap m_sceneMap;
   size_t m_simulationSpeed = 1;
   sf::Clock m_deltaClock;
+  sf::Time deltaTime;
   bool m_running{true};
 
   void init(const std::string &path);

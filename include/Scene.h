@@ -28,7 +28,7 @@ protected:
 public:
   Scene(GameEngine &game);
   void simulate(int something);
-  void registerAction(int inputkey, const std::string &aName);
+  void registerAction(keycode inputkey, const std::string &aName);
   virtual ~Scene() = default;
   ActionMap &getActionMap();
   virtual void update() = 0;

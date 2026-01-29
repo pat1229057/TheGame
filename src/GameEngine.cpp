@@ -1,6 +1,8 @@
 #include "GameEngine.h"
 #include "Assets.h"
+#include "SFML/Graphics/Rect.hpp"
 #include "SFML/Graphics/Texture.hpp"
+#include "SFML/Graphics/View.hpp"
 #include "SFML/Window/Event.hpp"
 #include "SFML/Window/Keyboard.hpp"
 #include "SFML/Window/Mouse.hpp"
@@ -22,7 +24,7 @@ void GameEngine::init(const std::string &path) {
   Assets::Instance().loadFromFile(path);
 
   // create and initialize window
-  m_window.create(sf::VideoMode({600, 800}), "TheGame");
+  m_window.create(sf::VideoMode({1200, 800}), "TheGame");
   m_window.setFramerateLimit(60);
   // Might change to config variables
 
@@ -74,6 +76,12 @@ void GameEngine::sUserInput() {
         quit();
       }
     }
+
+    // if (const auto *resized = event->getIf<sf::Event::Resized>()) {
+    //   sf::FloatRect size({0.f, 0.f}, {static_cast<float>(resized->size.x),
+    //                               static_cast<float>(resized->size.y)});
+    //   window().setView(sf::View(size));
+    // }
 
     // do screenshot x
     if (const auto *keypressed = event->getIf<sf::Event::KeyPressed>()) {
@@ -147,4 +155,4 @@ void GameEngine::update() {
   currentScene()->update();
 }
 
-void GameEngine::quit() { m_window.close(); }
+void GameEngine::quit() { m_running = false; }

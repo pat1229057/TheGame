@@ -1,7 +1,9 @@
 #pragma once
 #include "Assets.h"
 #include "SFML/Graphics.hpp"
+#include "SFML/Graphics/Rect.hpp"
 #include "SFML/Graphics/Texture.hpp"
+#include "SFML/System/Vector2.hpp"
 #include "Vec2.hpp"
 #include <cstddef>
 #include <string>
@@ -36,8 +38,14 @@ public:
     // TODO: get texture from singleton and set texture rect (sprite) size to
     // the first frame count
     sf::Texture texture{Assets::Instance().getTexture(textureName)};
+    // m_textureRect =
+    //     sf::IntRect({0, 0},
+    //                 {static_cast<int>(texture.getSize().x / frameCount),
+    //                  static_cast<int>(texture.getSize().y / frameCount)})
+    m_textureRect.position = {0, 0};
+
     m_textureRect.size = {static_cast<int>(texture.getSize().x / frameCount),
-                          static_cast<int>(texture.getSize().y / frameCount)};
+                          static_cast<int>(texture.getSize().y)};
     m_size.x = m_textureRect.size.x;
     m_size.y = m_textureRect.size.y;
   }
@@ -48,19 +56,37 @@ public:
 
     // TODO: 1) calculate the correct frame of animation to play based on
     // currentFrame
+    m_currentFrame++;
+    int animationFrame;
+    if (m_speed == 0) {
+      animationFrame = 0;
+    } else {
+      animationFrame =
+          static_cast<int>((m_currentFrame / m_speed) % m_frameCount);
+    }
     //      2) set the texture rectangle properly (see constructor for sample)
+    int sizeX = static_cast<int>(m_size.x);
+    int sizeY = static_cast<int>(m_size.y);
+    m_textureRect = sf::IntRect({animationFrame * sizeX, 0}, {sizeX, sizeY});
   }
   bool hasEnded() const {
-
     // TODO: detect when animation has ended (last frame was played) and return
     // true
+    if (m_currentFrame > m_speed && m_speed != 0) {
+      if ((m_currentFrame / m_speed) % m_frameCount == 0) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+    return false;
   }
 
   const std::string &getName() const { return m_name; }
 
   const sf::IntRect &getRect() const { return m_textureRect; }
 
-  template <typename T> const Vec2<T> &getSize() const { return m_size; }
+  const Vec2<size_t> &getSize() const { return m_size; }
 
   const sf::Texture &getTexture() {
     return Assets::Instance().getTexture(m_textureName);
