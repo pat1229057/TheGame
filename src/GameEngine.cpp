@@ -85,7 +85,7 @@ void GameEngine::sUserInput() {
 
     // do screenshot x
     if (const auto *keypressed = event->getIf<sf::Event::KeyPressed>()) {
-      if (keypressed->scancode == sf::Keyboard::Scancode::Escape) {
+      if (keypressed->scancode == sf::Keyboard::Scancode::X) {
         sf::Texture texture(m_window.getSize());
         texture.update(m_window);
         if (texture.copyToImage().saveToFile("assets/images/screenshot.png")) {
@@ -131,7 +131,7 @@ void GameEngine::sUserInput() {
         continue;
       }
       currentScene()->sDoAction(
-          Action(currentScene()->getActionMap().at(scancode), "PRESS"));
+          Action(currentScene()->getActionMap().at(scancode), type));
     }
   }
 }
@@ -151,8 +151,12 @@ void GameEngine::changeScene(const std::string &sceneName,
   }
 }
 void GameEngine::update() {
+  m_deltaTime = m_deltaClock.restart();
+
   sUserInput();
   currentScene()->update();
 }
 
 void GameEngine::quit() { m_running = false; }
+
+sf::Time GameEngine::getDeltaTime() { return m_deltaTime; }

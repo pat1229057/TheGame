@@ -18,7 +18,7 @@ protected:
   SceneMap m_sceneMap;
   size_t m_simulationSpeed = 1;
   sf::Clock m_deltaClock;
-  sf::Time deltaTime;
+  sf::Time m_deltaTime;
   bool m_running{true};
 
   void init(const std::string &path);
@@ -29,6 +29,7 @@ protected:
   std::shared_ptr<Scene> currentScene();
 
 public:
+  sf::Time getDeltaTime();
   GameEngine(const std::string &path);
 
   void changeScene(const std::string &sceneName, std::shared_ptr<Scene> scene,
@@ -38,6 +39,6 @@ public:
   void run();
 
   sf::RenderWindow &window();
-  const Assets &assets() const;
+  // const Assets &assets() const;
   bool isRunning();
 };

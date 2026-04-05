@@ -159,14 +159,14 @@ void Scene_Play::spawnPlayer() {
 
   // TODO: be sure to add the remaining components to the player
 
-  auto player = m_entityManager.addEntity("Player");
-  player->add<CAnimation>(Assets::Instance().getAnimation("Stand"), true);
-  player->add<CBoundingBox>(Vec2f(m_playerConfig.CX, m_playerConfig.CY));
-  player->add<CTransform>(
-      GridToMidPixel(m_playerConfig.X, m_playerConfig.X, player));
-  player->add<CState>();
-  player->add<CInput>();
-  player->add<CGravity>(m_playerConfig.GRAVITY);
+  m_player = m_entityManager.addEntity("Player");
+  m_player->add<CAnimation>(Assets::Instance().getAnimation("Stand"), true);
+  m_player->add<CBoundingBox>(Vec2f(m_playerConfig.CX, m_playerConfig.CY));
+  m_player->add<CTransform>(
+      GridToMidPixel(m_playerConfig.X, m_playerConfig.Y, m_player));
+  m_player->add<CState>();
+  m_player->add<CInput>();
+  m_player->add<CGravity>(m_playerConfig.GRAVITY);
 }
 
 void Scene_Play::spawnBullet(std::shared_ptr<Entity> entity) {
@@ -181,6 +181,8 @@ void Scene_Play::update() {
   // TODO: implement pause functionality
   sRender();
   sAnimation();
+  sMovement();
+  sCollision();
 
   // run all systems
 }
@@ -188,9 +190,20 @@ void Scene_Play::update() {
 void Scene_Play::sMovement() {
   // TODO: Implement player movement / jumping based on its CInput component
   // TODO: Implement gravity's effect on the player
-  // TODO: Implement the maximum player speed in both X and Y directions
-  // NOTE: Setting an entity's scale.x to -1/1 will make it face to the
-  // left/right
+
+  auto &transformComponent = player()->get<CTransform>();
+  transformComponent.prevPos = transformComponent.pos;
+  float deltaTime = m_game->getDeltaTime().asSeconds();
+  transformComponent.velocity.y += m_playerConfig.GRAVITY * deltaTime;
+  transformComponent.velocity.y =
+      std::min(transformComponent.velocity.y, m_playerConfig.MAXSPEED);
+
+  transformComponent.pos.y += transformComponent.velocity.y * deltaTime;
+
+  // std::cout << player()->get<CTransform>().pos.y << '\n';
+  //  TODO: Implement the maximum player speed in both X and Y directions
+  //  NOTE: Setting an entity's scale.x to -1/1 will make it face to the
+  //  left/right
 }
 
 void Scene_Play::sLifespan() {
@@ -214,6 +227,40 @@ void Scene_Play::sCollision() {
   //  update the CState component of the player to store whether
   //  it is currently on the gorund or in the air this will be sued by the
   //  animation system
+  auto &pos = m_player->get<CTransform>().pos;
+
+  for (auto entity : m_entityManager.getEntities()) {
+
+    if (entity->tag() == "Player" || entity->tag() == "Dec") {
+      continue;
+    }
+
+    if (entity->tag() == "Tile") {
+
+      Vec2f overlap = Physics::getOverlap(m_player, entity);
+
+      if (overlap.x > 0 && overlap.y > 0) {
+        Vec2f previousOverlap = Physics::getPreviousOverlap(m_player, entity);
+        std::cout << "prevX: " << previousOverlap.x
+                  << " prevY: " << previousOverlap.y << std::endl;
+
+        std::cout << "collision\n";
+        if (previousOverlap.y > 0) {
+
+        } else if (previousOverlap.x > 0) {
+          std::cout << "hello\n";
+          if (auto entityPos = entity->get<CTransform>().pos;
+              pos.y < entityPos.y) {
+            pos.y -= overlap.y;
+            std::cout << "resolution\n";
+          } else if (pos.y > entityPos.y) {
+          }
+        } else if (previousOverlap.x < 0 && previousOverlap.y < 0) {
+          pos.y -= overlap.y;
+        }
+      }
+    }
+  }
   // TODO: Check to see if the player has fallen down a hole (y > height())
   // TODO: Don't let the player walk off the left side of the map
 }
@@ -286,6 +333,8 @@ void Scene_Play::sRender() {
       }
     }
   }
+
+  // !most confusing code for em
   if (!m_drawGrid) {
     auto [width, height] = m_game->window().getView().getSize();
 
