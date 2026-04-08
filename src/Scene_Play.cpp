@@ -12,8 +12,10 @@
 #include "SFML/Graphics/Vertex.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "SFML/Window/Keyboard.hpp"
+#include "SFML/Window/Mouse.hpp"
 #include "Vec2.hpp"
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <istream>
 #include <memory>
@@ -34,6 +36,10 @@ void Scene_Play::init(const std::string &levelPath) {
   registerAction(sf::Keyboard::Scancode::T, "TOGGLE_TEXTURE");
   registerAction(sf::Keyboard::Scancode::C, "TOGGLE_COLLISION");
   registerAction(sf::Keyboard::Scancode::G, "TOGGLE_GRID");
+  registerAction(sf::Keyboard::Scancode::D, "RUNRIGHT");
+  registerAction(sf::Keyboard::Scancode::A, "RUNLEFT");
+  registerAction(sf::Keyboard::Scancode::Space, "JUMP");
+  registerAction(sf::Mouse::Button::Left, "SHOOT");
 
   // TODO: Register all other gameplay actions
 
@@ -200,6 +206,27 @@ void Scene_Play::sMovement() {
 
   transformComponent.pos.y += transformComponent.velocity.y * deltaTime;
 
+  auto &inputComponent = m_player->get<CInput>();
+  if (inputComponent.right) {
+    transformComponent.velocity.x =
+        std::min(m_playerConfig.SPEED * 1, m_playerConfig.MAXSPEED);
+    transformComponent.prevPos = transformComponent.pos;
+    transformComponent.pos += transformComponent.velocity * deltaTime;
+    std::cout << "right movement\n";
+    std::cout << transformComponent.pos.x << ',' << transformComponent.pos.y
+              << "\n";
+  }
+  if (inputComponent.left) {
+    transformComponent.velocity.x = m_playerConfig.SPEED * -1;
+    transformComponent.prevPos = transformComponent.pos;
+    transformComponent.pos += transformComponent.velocity * deltaTime;
+  }
+  if (!inputComponent.right && !inputComponent.left) {
+    transformComponent.velocity.x = 0;
+    transformComponent.prevPos = transformComponent.pos;
+    transformComponent.pos += transformComponent.velocity * deltaTime;
+  }
+
   // std::cout << player()->get<CTransform>().pos.y << '\n';
   //  TODO: Implement the maximum player speed in both X and Y directions
   //  NOTE: Setting an entity's scale.x to -1/1 will make it face to the
@@ -229,7 +256,7 @@ void Scene_Play::sCollision() {
   //  animation system
   auto &pos = m_player->get<CTransform>().pos;
 
-  for (auto entity : m_entityManager.getEntities()) {
+  for (const auto &entity : m_entityManager.getEntities()) {
 
     if (entity->tag() == "Player" || entity->tag() == "Dec") {
       continue;
@@ -272,6 +299,34 @@ void Scene_Play::sDoAction(const Action &action) {
 
     if (action.name() == "QUIT") {
       m_game->quit();
+    }
+    if (action.name() == "RUNRIGHT") {
+      m_player->get<CInput>().right = true;
+      std::cout << "right flag true\n";
+    }
+    if (action.name() == "RUNLEFT") {
+      m_player->get<CInput>().left = true;
+    }
+    if (action.name() == "JUMP") {
+      m_player->get<CInput>().canJump = true;
+    }
+    if (action.name() == "JUMP") {
+      m_player->get<CInput>().up = true;
+    }
+    if (action.name() == "SHOOT") {
+      m_player->get<CInput>().shoot = true;
+    }
+
+  } else if (action.type() == "RELEASED") {
+    if (action.name() == "RUNRIGHT") {
+      m_player->get<CInput>().right = false;
+      std::cout << "right flag false\n";
+    }
+    if (action.name() == "RUNLEFT") {
+      m_player->get<CInput>().left = false;
+    }
+    if (action.name() == "JUMP") {
+      m_player
     }
   }
 }

@@ -1,13 +1,18 @@
 Checks: >
+  -*,
   bugprone-*,
   performance-*,
   modernize-*,
+  readability-*,
+  cppcoreguidelines-*,
+  clang-analyzer-*,
+
   -modernize-use-auto,
   -modernize-use-trailing-return-type,
-  -modernize-avoid-c-arrays,
-  -modernize-use-nodiscard,
-  -modernize-pass-by-value
-
-WarningsAsErrors: ''
-HeaderFilterRegex: '.*'
+  -modernize-pass-by-value,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-pro-type-union-access,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic
+WarningsAsErrors: 'bugprone-*,performance-*'
+HeaderFilterRegex: '(src|include)/.*'
 FormatStyle: none
