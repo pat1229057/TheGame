@@ -19,7 +19,7 @@ Texture   TexPole     assets/images/flagpole.png
 Texture   TexPoleTop  assets/images/flagtop.png
 Texture   TexFlag     assets/images/flag.png
 Animation Stand        TexStand     1   0
-Animation Run          TexRun       4   10
+Animation Run          TexRun       3   10
 Animation Air          TexAir       1   0
 Animation Buster       TexBuster    1   0
 Animation Explosion    TexExplode   48  2

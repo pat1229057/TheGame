@@ -216,11 +216,13 @@ void Scene_Play::sMovement() {
     std::cout << "right movement\n";
     std::cout << transformComponent.pos.x << ',' << transformComponent.pos.y
               << "\n";
+    m_player->get<CState>().state = "RUN";
   }
   if (inputComponent.left) {
     transformComponent.velocity.x = m_playerConfig.SPEED * -1;
     transformComponent.prevPos = transformComponent.pos;
     transformComponent.pos += transformComponent.velocity * deltaTime;
+    m_player->get<CState>().state = "RUN";
   }
   if (inputComponent.canJump && inputComponent.up) {
     transformComponent.prevPos = transformComponent.pos;
@@ -228,14 +230,16 @@ void Scene_Play::sMovement() {
     transformComponent.velocity.y =
         std::min(transformComponent.velocity.y, m_playerConfig.MAXSPEED);
     transformComponent.pos += transformComponent.velocity * deltaTime;
-    inputComponent.canJump = false;
+    m_player->get<CState>().state = "JUMP";
+    std::cout << m_player->get<CState>().state << "\n";
     std::cout << std::boolalpha;
     std::cout << "can Jump: " << inputComponent.canJump << '\n';
   }
-  if (!inputComponent.right && !inputComponent.left) {
+  if (!inputComponent.right && !inputComponent.left && !inputComponent.up) {
     transformComponent.velocity.x = 0;
     transformComponent.prevPos = transformComponent.pos;
     transformComponent.pos += transformComponent.velocity * deltaTime;
+    m_player->get<CState>().state = "STAND";
   }
 
   // std::cout << player()->get<CTransform>().pos.y << '\n';
@@ -354,7 +358,31 @@ void Scene_Play::sAnimation() {
   // TODO: for each entity with an animation, call
   // entity->get<CAnimation>().animation.update()
   //  if the animation is not repeated, and it has ended, destroy the entity
-  for (auto entity : m_entityManager.getEntities()) {
+  if (m_player->get<CState>().state == "RUN") {
+    if (!(m_player->get<CAnimation>().animation.getName() == "Run")) {
+      m_player->get<CAnimation>().animation =
+          Assets::Instance().getAnimation("Run");
+      m_player->get<CAnimation>().repeat = true;
+    }
+  }
+  if (m_player->get<CState>().state == "STAND") {
+    if (!(m_player->get<CAnimation>().animation.getName() == "Stand")) {
+      m_player->get<CAnimation>().animation =
+          Assets::Instance().getAnimation("Stand");
+      m_player->get<CAnimation>().repeat = false;
+    }
+  }
+  std::cout << m_player->get<CState>().state << "\n";
+  if (m_player->get<CState>().state == "JUMP") {
+    if (!(m_player->get<CAnimation>().animation.getName() == "Air")) {
+      m_player->get<CAnimation>().animation =
+          Assets::Instance().getAnimation("Air");
+      m_player->get<CAnimation>().repeat = false;
+      std::cout << "AIR ANIMAITON NOW PLEASE\n";
+    }
+  }
+
+  for (const auto &entity : m_entityManager.getEntities()) {
     if (entity->has<CAnimation>()) {
       auto &animation = entity->get<CAnimation>();
       animation.animation.update();
@@ -401,6 +429,11 @@ void Scene_Play::sRender() {
                           AnimationComponent.animation.getRect().size.y / 2.f});
 
         sprite.setPosition(entity->get<CTransform>().pos);
+        if (entity->tag() == "Player") {
+          if (entity->get<CInput>().left) {
+            sprite.setScale({-1, 1});
+          }
+        }
         m_game->window().draw(sprite);
       }
     }
