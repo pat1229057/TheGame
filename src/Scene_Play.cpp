@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
+#include <ios>
 #include <istream>
 #include <memory>
 #include <sstream>
@@ -221,6 +222,16 @@ void Scene_Play::sMovement() {
     transformComponent.prevPos = transformComponent.pos;
     transformComponent.pos += transformComponent.velocity * deltaTime;
   }
+  if (inputComponent.canJump && inputComponent.up) {
+    transformComponent.prevPos = transformComponent.pos;
+    transformComponent.velocity.y = m_playerConfig.JUMP * 1;
+    transformComponent.velocity.y =
+        std::min(transformComponent.velocity.y, m_playerConfig.MAXSPEED);
+    transformComponent.pos += transformComponent.velocity * deltaTime;
+    inputComponent.canJump = false;
+    std::cout << std::boolalpha;
+    std::cout << "can Jump: " << inputComponent.canJump << '\n';
+  }
   if (!inputComponent.right && !inputComponent.left) {
     transformComponent.velocity.x = 0;
     transformComponent.prevPos = transformComponent.pos;
@@ -275,15 +286,17 @@ void Scene_Play::sCollision() {
         if (previousOverlap.y > 0) {
 
         } else if (previousOverlap.x > 0) {
-          std::cout << "hello\n";
           if (auto entityPos = entity->get<CTransform>().pos;
               pos.y < entityPos.y) {
             pos.y -= overlap.y;
-            std::cout << "resolution\n";
+            m_player->get<CInput>().canJump = true;
+            std::cout << "Can jump:" << m_player->get<CInput>().canJump << "\n";
           } else if (pos.y > entityPos.y) {
           }
         } else if (previousOverlap.x < 0 && previousOverlap.y < 0) {
           pos.y -= overlap.y;
+          m_player->get<CInput>().canJump = true;
+          std::cout << "Can jump:" << m_player->get<CInput>().canJump << "\n";
         }
       }
     }
@@ -308,7 +321,7 @@ void Scene_Play::sDoAction(const Action &action) {
       m_player->get<CInput>().left = true;
     }
     if (action.name() == "JUMP") {
-      m_player->get<CInput>().canJump = true;
+      m_player->get<CInput>().up = true;
     }
     if (action.name() == "JUMP") {
       m_player->get<CInput>().up = true;
@@ -326,7 +339,11 @@ void Scene_Play::sDoAction(const Action &action) {
       m_player->get<CInput>().left = false;
     }
     if (action.name() == "JUMP") {
-      m_player
+      m_player->get<CInput>().up = false;
+      m_player->get<CInput>().canJump = false;
+    }
+    if (action.name() == "SHOOT") {
+      m_player->get<CInput>().shoot = false;
     }
   }
 }
