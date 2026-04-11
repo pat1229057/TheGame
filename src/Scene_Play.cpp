@@ -463,6 +463,30 @@ void Scene_Play::sRender() {
     }
   }
   // draw all Entity collision bounding boxes with a rectangle
+  if (!m_drawCollision) {
+
+    for (const auto &entity : m_entityManager.getEntities()) {
+      if (entity->has<CBoundingBox>() && entity->has<CTransform>()) {
+
+        Vec2f pos = entity->get<CTransform>().pos;
+        const auto &boundingBox = entity->get<CBoundingBox>();
+
+        Vec2f topleft(pos.x - boundingBox.halfSize.x,
+                      pos.y - boundingBox.halfSize.y);
+        Vec2f topright(pos.x + boundingBox.halfSize.x,
+                       pos.y - boundingBox.halfSize.y);
+        Vec2f bottomleft(pos.x - boundingBox.halfSize.x,
+                         pos.y + boundingBox.halfSize.y);
+        Vec2f bottomright(pos.x + boundingBox.halfSize.x,
+                          pos.y + boundingBox.halfSize.y);
+
+        drawLine(topleft, topright);
+        drawLine(topright, bottomright);
+        drawLine(bottomright, bottomleft);
+        drawLine(bottomleft, topleft);
+      }
+    }
+  }
 
   // draw the grid
   m_game->window().display();
