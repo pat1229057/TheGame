@@ -352,6 +352,15 @@ void Scene_Play::sDoAction(const Action &action) {
     if (action.name() == "SHOOT") {
       m_player->get<CInput>().shoot = true;
     }
+    if (action.name() == "TOGGLE_COLLISION") {
+      m_drawCollision = !m_drawCollision;
+    }
+    if (action.name() == "TOGGLE_TEXTURE") {
+      m_drawTextures = !m_drawTextures;
+    }
+    if (action.name() == "TOGGLE_GRID") {
+      m_drawGrid = !m_drawGrid;
+    }
 
   } else if (action.type() == "RELEASED") {
     if (action.name() == "RUNRIGHT") {
@@ -438,7 +447,7 @@ void Scene_Play::sRender() {
   m_game->window().setView(view);
 
   // draw all Entity textures / animations
-  if (!m_drawTextures) {
+  if (m_drawTextures) {
     for (auto entity : m_entityManager.getEntities()) {
       if (entity->has<CAnimation>()) {
         auto &AnimationComponent = entity->get<CAnimation>();
@@ -482,7 +491,7 @@ void Scene_Play::sRender() {
     }
   }
   // draw all Entity collision bounding boxes with a rectangle
-  if (!m_drawCollision) {
+  if (m_drawCollision) {
 
     for (const auto &entity : m_entityManager.getEntities()) {
       if (entity->has<CBoundingBox>() && entity->has<CTransform>()) {
