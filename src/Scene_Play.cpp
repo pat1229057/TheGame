@@ -205,14 +205,10 @@ void Scene_Play::sMovement() {
   transformComponent.velocity.y =
       std::min(transformComponent.velocity.y, m_playerConfig.MAXSPEED);
 
-  transformComponent.pos.y += transformComponent.velocity.y * deltaTime;
-
   auto &inputComponent = m_player->get<CInput>();
   if (inputComponent.right) {
     transformComponent.velocity.x =
         std::min(m_playerConfig.SPEED * 1, m_playerConfig.MAXSPEED);
-    transformComponent.prevPos = transformComponent.pos;
-    transformComponent.pos += transformComponent.velocity * deltaTime;
     std::cout << "right movement\n";
     std::cout << transformComponent.pos.x << ',' << transformComponent.pos.y
               << "\n";
@@ -220,16 +216,12 @@ void Scene_Play::sMovement() {
   }
   if (inputComponent.left) {
     transformComponent.velocity.x = m_playerConfig.SPEED * -1;
-    transformComponent.prevPos = transformComponent.pos;
-    transformComponent.pos += transformComponent.velocity * deltaTime;
     m_player->get<CState>().state = "RUN";
   }
   if (inputComponent.canJump && inputComponent.up) {
-    transformComponent.prevPos = transformComponent.pos;
     transformComponent.velocity.y = m_playerConfig.JUMP * 1;
     transformComponent.velocity.y =
         std::min(transformComponent.velocity.y, m_playerConfig.MAXSPEED);
-    transformComponent.pos += transformComponent.velocity * deltaTime;
     m_player->get<CState>().state = "JUMP";
     std::cout << m_player->get<CState>().state << "\n";
     std::cout << std::boolalpha;
@@ -237,11 +229,9 @@ void Scene_Play::sMovement() {
   }
   if (!inputComponent.right && !inputComponent.left && !inputComponent.up) {
     transformComponent.velocity.x = 0;
-    transformComponent.prevPos = transformComponent.pos;
-    transformComponent.pos += transformComponent.velocity * deltaTime;
     m_player->get<CState>().state = "STAND";
   }
-
+  transformComponent.pos += transformComponent.velocity * deltaTime;
   // std::cout << player()->get<CTransform>().pos.y << '\n';
   //  TODO: Implement the maximum player speed in both X and Y directions
   //  NOTE: Setting an entity's scale.x to -1/1 will make it face to the
@@ -288,6 +278,8 @@ void Scene_Play::sCollision() {
 
         std::cout << "collision\n";
         if (previousOverlap.y > 0) {
+          float prevX = m_player->get<CTransform>().prevPos.x;
+          pos.x = prevX;
 
         } else if (previousOverlap.x > 0) {
           if (auto entityPos = entity->get<CTransform>().pos;
@@ -296,11 +288,38 @@ void Scene_Play::sCollision() {
             m_player->get<CInput>().canJump = true;
             std::cout << "Can jump:" << m_player->get<CInput>().canJump << "\n";
           } else if (pos.y > entityPos.y) {
+            pos.y += overlap.y;
+            // spawn coin
           }
         } else if (previousOverlap.x < 0 && previousOverlap.y < 0) {
-          pos.y -= overlap.y;
-          m_player->get<CInput>().canJump = true;
-          std::cout << "Can jump:" << m_player->get<CInput>().canJump << "\n";
+          auto playerTransform = m_player->get<CTransform>();
+          auto entityTransform = entity->get<CTransform>();
+
+          if (playerTransform.prevPos.x < entityTransform.pos.x &&
+              playerTransform.prevPos.y > entityTransform.pos.y) {
+            // bottom left
+            pos.x -= overlap.x;
+            pos.y += overlap.y;
+          } else if (playerTransform.prevPos.x > entityTransform.pos.x &&
+                     playerTransform.prevPos.y > entityTransform.pos.y) {
+            // bottom right
+            pos.x += overlap.x;
+            pos.y += overlap.y;
+          } else if (playerTransform.prevPos.x < entityTransform.pos.x &&
+                     playerTransform.prevPos.y < entityTransform.pos.y) {
+            // top left
+            pos.x -= overlap.x;
+            pos.y -= overlap.y;
+          } else if (playerTransform.prevPos.x > entityTransform.pos.x &&
+                     playerTransform.prevPos.y < entityTransform.pos.y) {
+            // top right
+            pos.x += overlap.x;
+            pos.y -= overlap.y;
+          }
+          // pos.y -= overlap.y;
+          // m_player->get<CInput>().canJump = true;
+          // std::cout << "Can jump:" << m_player->get<CInput>().canJump <<
+          // "\n";
         }
       }
     }
@@ -419,7 +438,7 @@ void Scene_Play::sRender() {
   m_game->window().setView(view);
 
   // draw all Entity textures / animations
-  if (m_drawTextures) {
+  if (!m_drawTextures) {
     for (auto entity : m_entityManager.getEntities()) {
       if (entity->has<CAnimation>()) {
         auto &AnimationComponent = entity->get<CAnimation>();
@@ -440,7 +459,7 @@ void Scene_Play::sRender() {
   }
 
   // !most confusing code for em
-  if (!m_drawGrid) {
+  if (m_drawGrid) {
     auto [width, height] = m_game->window().getView().getSize();
 
     float leftX = m_game->window().getView().getCenter().x - width / 2;
