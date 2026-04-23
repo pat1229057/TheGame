@@ -152,7 +152,7 @@ void GameEngine::changeScene(const std::string &sceneName,
 }
 void GameEngine::update() {
   m_deltaTime = m_deltaClock.restart();
-
+  ImGui::SFML::Update(m_window, m_deltaTime);
   sUserInput();
   currentScene()->update();
 }

@@ -9,6 +9,7 @@
 #include "SFML/Window/Keyboard.hpp"
 #include "SFML/Window/Mouse.hpp"
 #include "Scene_Play.h"
+#include "imgui-SFML.h"
 #include <memory>
 
 Scene_Menu::Scene_Menu(GameEngine &gameEngine)
@@ -107,6 +108,7 @@ void Scene_Menu::sRender() {
     }
     m_game->window().draw(m_menuText);
   }
+  ImGui::SFML::Render(m_game->window());
 
   m_game->window().display();
 }

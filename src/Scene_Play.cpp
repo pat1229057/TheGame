@@ -14,6 +14,8 @@
 #include "SFML/Window/Keyboard.hpp"
 #include "SFML/Window/Mouse.hpp"
 #include "Vec2.hpp"
+#include "imgui-SFML.h"
+#include "imgui.h"
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
@@ -186,11 +188,11 @@ void Scene_Play::update() {
   // update entity manager
   m_entityManager.update();
   // TODO: implement pause functionality
-  sRender();
+  sGUI();
   sAnimation();
   sMovement();
   sCollision();
-
+  sRender();
   // run all systems
 }
 
@@ -427,7 +429,25 @@ void Scene_Play::onEnd() {
   // use m_game.changeScene(correct params);
 }
 
-void Scene_Play::sGUI() {}
+void Scene_Play::sGUI() {
+  ImGui::Begin("GUI");
+
+  ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+  if (ImGui::BeginTabBar("Task", tab_bar_flags)) {
+
+    if (ImGui::BeginTabItem("Actions")) {
+      ImGui::EndTabItem();
+    }
+    if (ImGui::BeginTabItem("Systems")) {
+      ImGui::EndTabItem();
+    }
+    if (ImGui::BeginTabItem("EntityManager")) {
+      ImGui::EndTabItem();
+    }
+    ImGui::EndTabBar();
+  }
+  ImGui::End();
+}
 
 void Scene_Play::sRender() {
   // color the background darker so you know tha tthe game is paused (100, 100,
@@ -517,6 +537,7 @@ void Scene_Play::sRender() {
   }
 
   // draw the grid
+  ImGui::SFML::Render(m_game->window());
   m_game->window().display();
 }
 
