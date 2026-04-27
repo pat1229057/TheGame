@@ -243,10 +243,19 @@ void Scene_Play::sMovement() {
 void Scene_Play::sLifespan() {
   // TODO: Check lifespan of entities that have them, and destroy them if they
   // go over
+  for (const auto &entity : m_entityManager.getEntities()) {
+    if (entity->has<CLifeSpan>()) {
+      auto &lifespanComponent = entity->get<CLifeSpan>();
+      if (lifespanComponent.lifespan == 0) {
+        entity->destroy();
+      } else if (lifespanComponent.lifespan > 0) {
+        lifespanComponent.lifespan -= 1;
+      }
+    }
+  }
 }
 
 void Scene_Play::sCollision() {
-
   // REMEMBER: SFML's (0,0) position is on the TOP-LEFT corner
   // this means jumping will have a negative y component
   // and gravity will have a position y-component
