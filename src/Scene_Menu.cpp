@@ -43,8 +43,8 @@ void Scene_Menu::update() {
 void Scene_Menu::sDoAction(const Action &action) {
 
   // TODO: define logic for actions
-  std::string name = action.name();
-  std::string type = action.type();
+  const std::string &name = action.name();
+  const std::string &type = action.type();
   static sf::Clock clock;
   if (clock.getElapsedTime().asSeconds() > 0.20f) {
     if (name == "UP") {

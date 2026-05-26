@@ -29,7 +29,7 @@ protected:
 
   void update() override;
   void onEnd();
-  void spawnBullet(std::shared_ptr<Entity> entity);
+  void spawnBullet(const std::shared_ptr<Entity> &entity);
 
   std::shared_ptr<Entity> player();
   void spawnPlayer();

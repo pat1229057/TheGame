@@ -1,9 +1,8 @@
 #pragma once
 
-#include "Assets.h"
 #include "Scene.h"
 #include "imgui-SFML.h"
-#include "imgui.h"
+
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <memory>
 

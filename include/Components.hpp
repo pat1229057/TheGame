@@ -75,15 +75,15 @@ class CGravity : public Component {
 public:
   float gravity = 0;
   CGravity() = default;
-  CGravity(float g) : gravity(g) {}
+  CGravity(float grav) : gravity(grav) {}
 };
 
 class CState : public Component {
 
 public:
-  std::string state = "jumping";
+  std::string state = "JUMP";
   CState() = default;
-  CState(const std::string &s) : state(s) {}
+  CState(const std::string &states) : state(states) {}
 };
 
 static_assert(std::is_default_constructible_v<CTransform>);

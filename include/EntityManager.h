@@ -24,5 +24,5 @@ public:
   const EntityVec &getEntities() const;
   const EntityVec &getEntities(const std::string &tag);
   const EntityMap &getEntityMap();
-  const size_t &getTotalEntities();
+  const size_t &getTotalEntities() const;
 };

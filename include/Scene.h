@@ -23,11 +23,11 @@ protected:
   bool m_hasEnded{false};
   size_t m_currentFrame{0};
 
-  void setPaused(bool paused);
+  // void setPaused(bool paused);
 
 public:
   Scene(GameEngine &game);
-  void simulate(int something);
+  // void simulate(int something);
   void registerAction(keycode inputkey, const std::string &aName);
   virtual ~Scene() = default;
   ActionMap &getActionMap();

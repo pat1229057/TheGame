@@ -2,8 +2,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <cassert>
-#include <fstream>
-#include <iostream>
+
 #include <map>
 
 class Animation;
@@ -16,7 +15,7 @@ private:
   std::map<std::string, sf::Font> m_fontMap;
 
   void addTexture(const std::string &textureName, const std::string &path,
-                  bool smooth = 1);
+                  bool smooth = true);
 
   void addAnimation(const std::string &animationName,
                     const std::string &textureName, size_t frameCount,

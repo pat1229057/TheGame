@@ -3,23 +3,29 @@
 #include "Animation.hpp"
 #include "Assets.h"
 #include "Components.hpp"
+#include "Entity.hpp"
 #include "EntityManager.h"
 #include "GameEngine.h"
 #include "Physics.hpp"
 #include "SFML/Graphics/Color.hpp"
 #include "SFML/Graphics/PrimitiveType.hpp"
 #include "SFML/Graphics/Sprite.hpp"
+#include "SFML/Graphics/Texture.hpp"
 #include "SFML/Graphics/Vertex.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "SFML/Window/Keyboard.hpp"
 #include "SFML/Window/Mouse.hpp"
+#include "Scene_Menu.h"
 #include "Vec2.hpp"
 #include "imgui-SFML.h"
 #include "imgui.h"
 #include <algorithm>
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
+#include <fstream>
 #include <ios>
+#include <iostream>
 #include <istream>
 #include <memory>
 #include <sstream>
@@ -136,12 +142,8 @@ void Scene_Play::loadLevel(const std::string &filename) {
           m_playerConfig.WEAPON;
       spawnPlayer();
     }
-    std::cout << "Loaded " << m_entityManager.getEntities().size()
-              << " entities\n";
   }
   file.close();
-  std::cout << "Loaded " << m_entityManager.getEntities().size()
-            << " entities\n";
 
   // some sample entities
   // IMPORTANT: always add the CAnimation component first so that the
@@ -178,10 +180,22 @@ void Scene_Play::spawnPlayer() {
   m_player->add<CGravity>(m_playerConfig.GRAVITY);
 }
 
-void Scene_Play::spawnBullet(std::shared_ptr<Entity> entity) {
+void Scene_Play::spawnBullet(const std::shared_ptr<Entity> &entity) {
 
   // TODO: this should spawn a bullet at the given entity,
   //  going in the direction the entity is facing
+  if (entity->get<CState>().state != "JUMP" && entity->get<CInput>().canShoot) {
+    auto bullet = m_entityManager.addEntity("Bullet");
+    bullet->add<CLifeSpan>(15, m_currentFrame);
+    bullet->add<CAnimation>(Assets::Instance().getAnimation("Buster"), true);
+    bullet->add<CTransform>(entity->get<CTransform>().pos);
+    auto &transform = bullet->get<CTransform>();
+    transform.velocity = entity->get<CTransform>().scale * Vec2f(45.0F, 0.0F);
+    transform.scale = entity->get<CTransform>().scale * Vec2f(-1.0F, -1.0F);
+    auto [x, y] = bullet->get<CAnimation>().animation.getSize();
+    bullet->add<CBoundingBox>(Vec2f(x, y));
+    entity->get<CInput>().shoot = false;
+  }
 }
 
 void Scene_Play::update() {
@@ -192,6 +206,10 @@ void Scene_Play::update() {
   sAnimation();
   sMovement();
   sCollision();
+  if (m_player->get<CInput>().shoot) {
+    spawnBullet(m_player);
+  }
+  sLifespan();
   sRender();
   // run all systems
 }
@@ -211,33 +229,33 @@ void Scene_Play::sMovement() {
   if (inputComponent.right) {
     transformComponent.velocity.x =
         std::min(m_playerConfig.SPEED * 1, m_playerConfig.MAXSPEED);
-    std::cout << "right movement\n";
-    std::cout << transformComponent.pos.x << ',' << transformComponent.pos.y
-              << "\n";
+    transformComponent.scale.x = 1;
     m_player->get<CState>().state = "RUN";
   }
   if (inputComponent.left) {
     transformComponent.velocity.x = m_playerConfig.SPEED * -1;
     m_player->get<CState>().state = "RUN";
+    transformComponent.scale.x = -1;
   }
   if (inputComponent.canJump && inputComponent.up) {
     transformComponent.velocity.y = m_playerConfig.JUMP * 1;
     transformComponent.velocity.y =
         std::min(transformComponent.velocity.y, m_playerConfig.MAXSPEED);
     m_player->get<CState>().state = "JUMP";
-    std::cout << m_player->get<CState>().state << "\n";
-    std::cout << std::boolalpha;
-    std::cout << "can Jump: " << inputComponent.canJump << '\n';
   }
   if (!inputComponent.right && !inputComponent.left && !inputComponent.up) {
     transformComponent.velocity.x = 0;
     m_player->get<CState>().state = "STAND";
   }
-  transformComponent.pos += transformComponent.velocity * deltaTime;
+
   // std::cout << player()->get<CTransform>().pos.y << '\n';
   //  TODO: Implement the maximum player speed in both X and Y directions
   //  NOTE: Setting an entity's scale.x to -1/1 will make it face to the
   //  left/right
+  for (const auto &entity : m_entityManager.getEntities()) {
+    auto &transformME = entity->get<CTransform>();
+    transformME.pos += transformME.velocity * deltaTime;
+  }
 }
 
 void Scene_Play::sLifespan() {
@@ -271,6 +289,7 @@ void Scene_Play::sCollision() {
   //  it is currently on the gorund or in the air this will be sued by the
   //  animation system
   auto &pos = m_player->get<CTransform>().pos;
+  std::shared_ptr<Entity> bulletptr = nullptr;
 
   for (const auto &entity : m_entityManager.getEntities()) {
 
@@ -281,13 +300,19 @@ void Scene_Play::sCollision() {
     if (entity->tag() == "Tile") {
 
       Vec2f overlap = Physics::getOverlap(m_player, entity);
+      Vec2f bulletOverlap;
+      for (auto &bullet : m_entityManager.getEntities()) {
+        if (bullet->tag() == "Bullet") {
+          bulletOverlap = Physics::getOverlap(bullet, entity);
+          if (bulletOverlap.x > 0 && bulletOverlap.y > 0) {
+            bulletptr = bullet;
+          }
+        }
+      }
 
       if (overlap.x > 0 && overlap.y > 0) {
         Vec2f previousOverlap = Physics::getPreviousOverlap(m_player, entity);
-        std::cout << "prevX: " << previousOverlap.x
-                  << " prevY: " << previousOverlap.y << std::endl;
 
-        std::cout << "collision\n";
         if (previousOverlap.y > 0) {
           float prevX = m_player->get<CTransform>().prevPos.x;
           pos.x = prevX;
@@ -297,10 +322,37 @@ void Scene_Play::sCollision() {
               pos.y < entityPos.y) {
             pos.y -= overlap.y;
             m_player->get<CInput>().canJump = true;
-            std::cout << "Can jump:" << m_player->get<CInput>().canJump << "\n";
+
           } else if (pos.y > entityPos.y) {
             pos.y += overlap.y;
             // spawn coin
+
+            if (entity->has<CAnimation>()) {
+              if (entity->get<CAnimation>().animation.getName() == "Question") {
+                auto coin = m_entityManager.addEntity("Coin");
+                coin->add<CAnimation>(Assets::Instance().getAnimation("Coin"),
+                                      false);
+
+                auto [x, y] = entityPos;
+                coin->add<CTransform>(Vec2f(x, y - 64));
+                auto &animation = entity->get<CAnimation>();
+                animation.animation =
+                    Assets::Instance().getAnimation("Question2");
+              }
+              if (entity->get<CAnimation>().animation.getName() == "Brick") {
+                auto explosion = m_entityManager.addEntity("Dec");
+                explosion->add<CAnimation>(
+                    Assets::Instance().getAnimation("Explosion"), false);
+                explosion->add<CTransform>(entity->get<CTransform>().pos);
+                entity->destroy();
+                m_player->get<CInput>().up = false;
+              }
+            }
+            if (entity->get<CAnimation>().animation.getName() == "Pole" ||
+                entity->get<CAnimation>().animation.getName() == "PoleTop") {
+              m_player->get<CTransform>().pos =
+                  GridToMidPixel(m_playerConfig.X, m_playerConfig.Y, m_player);
+            }
           }
         } else if (previousOverlap.x < 0 && previousOverlap.y < 0) {
           auto playerTransform = m_player->get<CTransform>();
@@ -333,10 +385,35 @@ void Scene_Play::sCollision() {
           // "\n";
         }
       }
+      if (bulletOverlap.x > 0 && bulletOverlap.y > 0) {
+        if (entity->get<CAnimation>().animation.getName() == "Brick") {
+          auto explosion = m_entityManager.addEntity("Dec");
+          explosion->add<CAnimation>(
+              Assets::Instance().getAnimation("Explosion"), false);
+          explosion->add<CTransform>(entity->get<CTransform>().pos);
+          entity->destroy();
+          bulletptr->destroy();
+        } else {
+          bulletptr->destroy();
+        }
+        if (entity->get<CAnimation>().animation.getName() == "Pole" ||
+            entity->get<CAnimation>().animation.getName() == "PoleTop") {
+          m_player->get<CTransform>().pos =
+              GridToMidPixel(m_playerConfig.X, m_playerConfig.Y, m_player);
+        }
+      }
+      // ###############################################
+
+      // ###############################
     }
   }
   // TODO: Check to see if the player has fallen down a hole (y > height())
   // TODO: Don't let the player walk off the left side of the map
+  if (pos.y > m_game->window().getView().getCenter().y +
+                  m_game->window().getView().getSize().y / 2) {
+    m_player->get<CTransform>().pos =
+        GridToMidPixel(m_playerConfig.X, m_playerConfig.Y, m_player);
+  }
 }
 
 void Scene_Play::sDoAction(const Action &action) {
@@ -349,7 +426,6 @@ void Scene_Play::sDoAction(const Action &action) {
     }
     if (action.name() == "RUNRIGHT") {
       m_player->get<CInput>().right = true;
-      std::cout << "right flag true\n";
     }
     if (action.name() == "RUNLEFT") {
       m_player->get<CInput>().left = true;
@@ -376,7 +452,6 @@ void Scene_Play::sDoAction(const Action &action) {
   } else if (action.type() == "RELEASED") {
     if (action.name() == "RUNRIGHT") {
       m_player->get<CInput>().right = false;
-      std::cout << "right flag false\n";
     }
     if (action.name() == "RUNLEFT") {
       m_player->get<CInput>().left = false;
@@ -411,13 +486,11 @@ void Scene_Play::sAnimation() {
       m_player->get<CAnimation>().repeat = false;
     }
   }
-  std::cout << m_player->get<CState>().state << "\n";
   if (m_player->get<CState>().state == "JUMP") {
     if (!(m_player->get<CAnimation>().animation.getName() == "Air")) {
       m_player->get<CAnimation>().animation =
           Assets::Instance().getAnimation("Air");
       m_player->get<CAnimation>().repeat = false;
-      std::cout << "AIR ANIMAITON NOW PLEASE\n";
     }
   }
 
@@ -425,6 +498,9 @@ void Scene_Play::sAnimation() {
     if (entity->has<CAnimation>()) {
       auto &animation = entity->get<CAnimation>();
       animation.animation.update();
+      if (!animation.repeat && animation.animation.hasEnded()) {
+        entity->destroy();
+      }
     }
   }
 
@@ -436,6 +512,8 @@ void Scene_Play::sAnimation() {
 void Scene_Play::onEnd() {
   // TODO: When the scene ends, change back to the MENU scene
   // use m_game.changeScene(correct params);
+
+  m_game->changeScene("MENU", std::make_shared<Scene_Menu>(*m_game), true);
 }
 
 void Scene_Play::sGUI() {
@@ -445,12 +523,269 @@ void Scene_Play::sGUI() {
   if (ImGui::BeginTabBar("Task", tab_bar_flags)) {
 
     if (ImGui::BeginTabItem("Actions")) {
+      auto &playerInput = m_player->get<CInput>();
+      if (ImGui::Button("START##1")) {
+        playerInput.left = true;
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("END##2")) {
+        playerInput.left = false;
+      }
+      ImGui::SameLine();
+      ImGui::Text("LEFT");
+
+      if (ImGui::Button("START##3")) {
+        playerInput.right = true;
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("END##4")) {
+        playerInput.right = false;
+      }
+      ImGui::SameLine();
+      ImGui::Text("RIGHT");
+
+      if (ImGui::Button("START##5")) {
+        playerInput.up = true;
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("END##6")) {
+        playerInput.up = false;
+      }
+      ImGui::SameLine();
+      ImGui::Text("JUMP");
+
+      if (ImGui::Button("START##7")) {
+        playerInput.shoot = true;
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("END##8")) {
+        playerInput.shoot = false;
+      }
+      ImGui::SameLine();
+      ImGui::Text("SHOOT");
+
+      if (ImGui::Button("START##9")) {
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("END##10")) {
+      }
+      ImGui::SameLine();
+      ImGui::Text("PAUSE");
+
+      if (ImGui::Button("START##11")) {
+        m_drawCollision = true;
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("END##12")) {
+        m_drawCollision = false;
+      }
+      ImGui::SameLine();
+      ImGui::Text("TOGGLE_COLLISION");
+
+      if (ImGui::Button("START##13")) {
+        m_drawGrid = true;
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("END##14")) {
+        m_drawGrid = false;
+      }
+      ImGui::SameLine();
+      ImGui::Text("TOGGLE_GRID");
+
+      if (ImGui::Button("START##15")) {
+        m_drawTextures = true;
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("END##16")) {
+        m_drawTextures = false;
+      }
+      ImGui::SameLine();
+      ImGui::Text("TOGGLE_TEXTURE");
+
+      if (ImGui::Button("START##17")) {
+        onEnd();
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("END##18")) {
+        onEnd();
+      }
+
+      ImGui::SameLine();
+      ImGui::Text("QUIT");
+
+      ImGui::EndTabItem();
+    }
+    if (ImGui::BeginTabItem("Assets")) {
+      if (ImGui::CollapsingHeader("Animations")) {
+        ImGui::Indent();
+        std::string textureName;
+        sf::Texture texture;
+
+        for (const auto &[textureName, texture] :
+             Assets::Instance().getTextures()) {
+
+          ImTextureID textureID =
+              (ImTextureID)(intptr_t)texture.getNativeHandle();
+          ImGui::Image(textureID, ImVec2(64, 64));
+        }
+        ImGui::Unindent();
+      }
       ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Systems")) {
       ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("EntityManager")) {
+      if (ImGui::CollapsingHeader("Entities by Tag")) {
+        ImGui::Indent();
+        if (ImGui::CollapsingHeader("bullet")) {
+          ImGui::Indent();
+          for (const auto &entity : m_entityManager.getEntities("Bullet")) {
+            // ImGui::PushID(static_cast<int>(entity->id()));
+            // ImGui::PopID();
+            if (entity->has<CAnimation>()) {
+              ImTextureID textureID =
+                  (ImTextureID)(intptr_t)entity->get<CAnimation>()
+                      .animation.getTexture()
+                      .getNativeHandle();
+
+              ImGui::Image(textureID, ImVec2(32, 32));
+            }
+            ImGui::SameLine();
+            ImGui::Text("%zu", entity->id());
+            ImGui::SameLine();
+            std::string tag = entity->tag();
+            const char *ctag = tag.c_str();
+            ImGui::Text(ctag);
+            ImGui::SameLine();
+            ImGui::Text(entity->get<CAnimation>().animation.getName().c_str());
+          }
+
+          ImGui::Unindent();
+        }
+        if (ImGui::CollapsingHeader("coin")) {
+          ImGui::Indent();
+          for (const auto &entity : m_entityManager.getEntities("Coin")) {
+            // ImGui::PushID(static_cast<int>(entity->id()));
+            // ImGui::PopID();
+            if (entity->has<CAnimation>()) {
+              ImTextureID textureID =
+                  (ImTextureID)(intptr_t)entity->get<CAnimation>()
+                      .animation.getTexture()
+                      .getNativeHandle();
+
+              ImGui::Image(textureID, ImVec2(32, 32));
+            }
+            ImGui::SameLine();
+            ImGui::Text("%zu", entity->id());
+            ImGui::SameLine();
+            std::string tag = entity->tag();
+            const char *ctag = tag.c_str();
+            ImGui::Text(ctag);
+            ImGui::SameLine();
+            ImGui::Text(entity->get<CAnimation>().animation.getName().c_str());
+          }
+          ImGui::Unindent();
+        }
+        if (ImGui::CollapsingHeader("dec")) {
+          ImGui::Indent();
+          for (const auto &entity : m_entityManager.getEntities("Dec")) {
+            // ImGui::PushID(static_cast<int>(entity->id()));
+            // ImGui::PopID();
+            if (entity->has<CAnimation>()) {
+              ImTextureID textureID =
+                  (ImTextureID)(intptr_t)entity->get<CAnimation>()
+                      .animation.getTexture()
+                      .getNativeHandle();
+
+              ImGui::Image(textureID, ImVec2(32, 32));
+            }
+            ImGui::SameLine();
+            ImGui::Text("%zu", entity->id());
+            ImGui::SameLine();
+            std::string tag = entity->tag();
+            const char *ctag = tag.c_str();
+            ImGui::Text(ctag);
+            ImGui::SameLine();
+            ImGui::Text(entity->get<CAnimation>().animation.getName().c_str());
+          }
+          ImGui::Unindent();
+        }
+        if (ImGui::CollapsingHeader("player")) {
+          ImGui::Indent();
+          for (const auto &entity : m_entityManager.getEntities("Player")) {
+            // ImGui::PushID(static_cast<int>(entity->id()));
+            // ImGui::PopID();
+            if (entity->has<CAnimation>()) {
+              ImTextureID textureID =
+                  (ImTextureID)(intptr_t)entity->get<CAnimation>()
+                      .animation.getTexture()
+                      .getNativeHandle();
+
+              ImGui::Image(textureID, ImVec2(32, 32));
+            }
+            ImGui::SameLine();
+            ImGui::Text("%zu", entity->id());
+            ImGui::SameLine();
+            std::string tag = entity->tag();
+            const char *ctag = tag.c_str();
+            ImGui::Text(ctag);
+            ImGui::SameLine();
+            ImGui::Text(entity->get<CAnimation>().animation.getName().c_str());
+          }
+          ImGui::Unindent();
+        }
+        if (ImGui::CollapsingHeader("tile")) {
+          ImGui::Indent();
+          for (const auto &entity : m_entityManager.getEntities("Tile")) {
+            // ImGui::PushID(static_cast<int>(entity->id()));
+            // ImGui::PopID();
+            if (entity->has<CAnimation>()) {
+              ImTextureID textureID =
+                  (ImTextureID)(intptr_t)entity->get<CAnimation>()
+                      .animation.getTexture()
+                      .getNativeHandle();
+
+              ImGui::Image(textureID, ImVec2(32, 32));
+            }
+            ImGui::SameLine();
+            ImGui::Text("%zu", entity->id());
+            ImGui::SameLine();
+            std::string tag = entity->tag();
+            const char *ctag = tag.c_str();
+            ImGui::Text(ctag);
+            ImGui::SameLine();
+            ImGui::Text(entity->get<CAnimation>().animation.getName().c_str());
+          }
+          ImGui::Unindent();
+        }
+
+        ImGui::Unindent();
+      }
+      if (ImGui::CollapsingHeader("All Entities")) {
+        ImGui::Indent();
+        for (const auto &entity : m_entityManager.getEntities()) {
+          // ImGui::PushID(static_cast<int>(entity->id()));
+          // ImGui::PopID();
+          if (entity->has<CAnimation>()) {
+            ImTextureID textureID =
+                (ImTextureID)(intptr_t)entity->get<CAnimation>()
+                    .animation.getTexture()
+                    .getNativeHandle();
+
+            ImGui::Image(textureID, ImVec2(32, 32));
+          }
+          ImGui::SameLine();
+          ImGui::Text("%zu", entity->id());
+          ImGui::SameLine();
+          std::string tag = entity->tag();
+          const char *ctag = tag.c_str();
+          ImGui::Text(ctag);
+          ImGui::SameLine();
+          ImGui::Text(entity->get<CAnimation>().animation.getName().c_str());
+        }
+        ImGui::Unindent();
+      }
       ImGui::EndTabItem();
     }
     ImGui::EndTabBar();
@@ -459,8 +794,8 @@ void Scene_Play::sGUI() {
 }
 
 void Scene_Play::sRender() {
-  // color the background darker so you know tha tthe game is paused (100, 100,
-  // 250) clear to blue by default ( 50, 50, 150)
+  // color the background darker so you know tha tthe game is paused (100,
+  // 100, 250) clear to blue by default ( 50, 50, 150)
   if (!m_paused) {
     m_game->window().clear(sf::Color(100, 100, 250));
   } else {
@@ -477,7 +812,7 @@ void Scene_Play::sRender() {
 
   // draw all Entity textures / animations
   if (m_drawTextures) {
-    for (auto entity : m_entityManager.getEntities()) {
+    for (const auto &entity : m_entityManager.getEntities()) {
       if (entity->has<CAnimation>()) {
         auto &AnimationComponent = entity->get<CAnimation>();
         sf::Sprite sprite(AnimationComponent.animation.getTexture());
@@ -491,6 +826,10 @@ void Scene_Play::sRender() {
             sprite.setScale({-1, 1});
           }
         }
+        if (entity->tag() == "Bullet") {
+          sprite.setScale(entity->get<CTransform>().scale);
+        }
+
         m_game->window().draw(sprite);
       }
     }

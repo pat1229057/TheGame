@@ -1,6 +1,5 @@
 #pragma once
 #include "Assets.h"
-#include "SFML/Graphics.hpp"
 #include "SFML/Graphics/Rect.hpp"
 #include "SFML/Graphics/Texture.hpp"
 #include "SFML/System/Vector2.hpp"
@@ -57,7 +56,7 @@ public:
     // TODO: 1) calculate the correct frame of animation to play based on
     // currentFrame
     m_currentFrame++;
-    int animationFrame;
+    int animationFrame{};
     if (m_speed == 0) {
       animationFrame = 0;
     } else {
@@ -75,8 +74,6 @@ public:
     if (m_currentFrame > m_speed && m_speed != 0) {
       if ((m_currentFrame / m_speed) % m_frameCount == 0) {
         return true;
-      } else {
-        return false;
       }
     }
     return false;

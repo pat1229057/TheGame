@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Entity.hpp"
-#include <sstream>
 #include <string>
 
 class Action {

@@ -1,11 +1,8 @@
 #include "EntityManager.h"
-#include <algorithm>
 
 void EntityManager::removeDeadEntities(EntityVec &vec) {
 
-  auto deadIterator = std::remove_if(
-      vec.begin(), vec.end(), [](const auto &e) { return !e->isAlive(); });
-  vec.erase(deadIterator, vec.end());
+  std::erase_if(vec, [](const auto &e) { return !e->isAlive(); });
 }
 
 // void EntityManager::init() {}
@@ -48,4 +45,6 @@ const EntityVec &EntityManager::getEntities(const std::string &tag) {
   return m_entityMap[tag];
 }
 const EntityMap &EntityManager::getEntityMap() { return m_entityMap; }
-const size_t &EntityManager::getTotalEntities() { return m_totalEntities; }
+const size_t &EntityManager::getTotalEntities() const {
+  return m_totalEntities;
+}
